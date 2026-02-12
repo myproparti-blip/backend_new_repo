@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: server
+    runtime: node
+    rootDir: .
+    buildCommand: cd src && npm install
+    startCommand: node src/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5001
