@@ -19,8 +19,8 @@
  */
 export const getPaginationParams = (query) => {
 
-    const DEFAULT_LIMIT = 20;   // Match frontend pagination
-    const MAX_LIMIT = 100;     // Safety cap for UI
+     const DEFAULT_LIMIT = 20;   // Match frontend pagination
+     const MAX_LIMIT = 10000;     // Safety cap for UI
 
     // Page
     const page = Math.max(1, parseInt(query.page) || 1);
@@ -98,7 +98,7 @@ export const buildPaginationError = (message, status = 500) => {
  */
 export const validatePaginationParams = (query) => {
 
-    const MAX_LIMIT = 100;
+     const MAX_LIMIT = 10000;
 
     if (query.page && (isNaN(query.page) || parseInt(query.page) < 1)) {
         return {
