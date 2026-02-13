@@ -29,6 +29,9 @@ export const createRajeshHouse = async (req, res) => {
             });
         }
 
+        // Exclude spreadsheetData from request body
+        const { spreadsheetData, ...bodyWithoutSpreadsheet } = req.body;
+
         const newForm = new RajeshHouseModel({
             clientId,
             uniqueId,
@@ -38,15 +41,19 @@ export const createRajeshHouse = async (req, res) => {
             status: "pending",
             dateTime: new Date().toLocaleString(),
             day: new Date().toLocaleDateString("en-US", { weekday: "long" }),
-            ...req.body
+            ...bodyWithoutSpreadsheet
         });
 
         const savedForm = await newForm.save();
 
+        // Convert to plain object and remove spreadsheetData from response
+        const responseData = savedForm.toObject();
+        delete responseData.spreadsheetData;
+
         res.status(201).json({
             success: true,
             message: "Rajesh House form created successfully",
-            data: savedForm
+            data: responseData
         });
     } catch (error) {
         console.error("[createRajeshHouse] Error:", error);
