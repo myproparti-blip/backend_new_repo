@@ -8,9 +8,32 @@
  * @param {Object} query - Query object containing page and limit
  * @returns {Object} Validated pagination params { page, limit, skip }
  */
+/**
+ * Pagination Helper Utilities
+ * Optimized for real-time apps & large datasets
+ */
+
+/**
+ * Extract and validate pagination parameters
+ * Frontend default limit = 20
+ */
 export const getPaginationParams = (query) => {
+
+    const DEFAULT_LIMIT = 20;   // Match frontend pagination
+    const MAX_LIMIT = 100;     // Safety cap for UI
+
+    // Page
     const page = Math.max(1, parseInt(query.page) || 1);
-    const limit = Math.min(10000, Math.max(1, parseInt(query.limit) || 5));
+
+    // Limit (safe handling)
+    const requestedLimit = parseInt(query.limit) || DEFAULT_LIMIT;
+
+    const limit = Math.min(
+        MAX_LIMIT,
+        Math.max(1, requestedLimit)
+    );
+
+    // Skip calculation
     const skip = (page - 1) * limit;
 
     return { page, limit, skip };
@@ -25,23 +48,25 @@ export const getPaginationParams = (query) => {
  * @returns {Object} Pagination object with metadata
  */
 export const buildPaginationResponse = (data, total, page, limit) => {
-    const pages = Math.ceil(total / limit);
-    const hasNextPage = page < pages;
-    const hasPrevPage = page > 1;
+
+    const pages = total > 0
+        ? Math.ceil(total / limit)
+        : 1;
 
     return {
         data,
         pagination: {
-            total,
-            page,
-            limit,
-            pages,
-            hasNextPage,
-            hasPrevPage,
+            total,          // Total DB records (any size)
+            page,           // Current page
+            limit,          // Records per page
+            pages,          // Total pages
+            hasNextPage: page < pages,
+            hasPrevPage: page > 1,
             skip: (page - 1) * limit
         }
     };
 };
+
 
 /**
  * Build standardized error pagination response
@@ -57,7 +82,7 @@ export const buildPaginationError = (message, status = 500) => {
         pagination: {
             total: 0,
             page: 1,
-            limit: 5,
+            limit: 20,
             pages: 0,
             hasNextPage: false,
             hasPrevPage: false,
@@ -72,6 +97,9 @@ export const buildPaginationError = (message, status = 500) => {
  * @returns {Object|null} Error object or null if valid
  */
 export const validatePaginationParams = (query) => {
+
+    const MAX_LIMIT = 100;
+
     if (query.page && (isNaN(query.page) || parseInt(query.page) < 1)) {
         return {
             success: false,
@@ -88,16 +116,17 @@ export const validatePaginationParams = (query) => {
         };
     }
 
-    if (query.limit && parseInt(query.limit) > 10000) {
+    if (query.limit && parseInt(query.limit) > MAX_LIMIT) {
         return {
             success: false,
-            message: "Limit exceeds maximum of 10000 records",
+            message: `Limit exceeds maximum of ${MAX_LIMIT}`,
             statusCode: 400
         };
     }
 
     return null;
 };
+
 
 /**
  * Calculate offset for cursor-based pagination
