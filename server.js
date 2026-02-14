@@ -87,19 +87,15 @@ app.use("/api", authMiddleware);
 // ---------------------------------------------------
 import imageRoutes, { documentRouter } from "./src/routes/imageRoutes.js";
 import customOptionsRoutes from "./src/routes/customOptionsRoutes.js";
+import chipsRoutes from "./src/routes/chipsRoutes.js";
 import billRoutes from "./src/routes/billRoutes.js";
 import rajeshHouseRoutes from "./src/routes/rajeshHouseRoutes.js";
-import rajeshRowHouseRoutes from "./src/routes/rajeshRowHouseRoutes.js";
-import rajeshBankRoutes from "./src/routes/rajeshBankRoutes.js";
-import rajeshFlatRoutes from "./src/routes/rajeshFlatRoutes.js";
 
 app.use("/api/rajesh-house", rajeshHouseRoutes);
-app.use("/api/rajesh-row-house", rajeshRowHouseRoutes);
-app.use("/api/rajesh-bank", rajeshBankRoutes);
-app.use("/api/rajesh-flat", rajeshFlatRoutes);
 app.use("/api/images", imageRoutes);
 app.use("/api/documents", documentRouter);
 app.use("/api/options", customOptionsRoutes);
+app.use("/api/chips", chipsRoutes);
 app.use("/api/bills", billRoutes);
 
 // ---------------------------------------------------

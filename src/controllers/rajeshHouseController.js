@@ -160,23 +160,66 @@ export const getAllRajeshHouse = async (req, res) => {
         // Get sort parameters (default: createdAt descending)
         const sortParams = getSortParams(req.query, 'createdAt');
 
-        // Define fields to return (optimized for dashboard list)
-        const selectFields = [
-            'clientId', 'uniqueId', 'username', 'dateTime', 'day',
-            'bankName', 'city', 'clientName', 'mobileNumber', 'address',
-            'payment', 'collectedBy', 'dsa', 'engineerName', 'notes',
-            'selectedForm', 'status', 'managerFeedback', 'submittedByManager',
-            'lastUpdatedBy', 'lastUpdatedByRole', 'lastUpdatedAt', 'createdAt',
-            'updatedAt', '_id', 'formType'
+        // Build aggregation pipeline with chip name lookup
+        const pipeline = [
+            { $match: filter },
+            {
+                $lookup: {
+                    from: "chips",
+                    localField: "selectedForm",
+                    foreignField: "_id",
+                    as: "chipDetails"
+                }
+            },
+            {
+                $addFields: {
+                    chipName: {
+                        $cond: [
+                            { $gt: [{ $size: "$chipDetails" }, 0] },
+                            { $arrayElemAt: ["$chipDetails.value", 0] },
+                            null
+                        ]
+                    }
+                }
+            },
+            {
+                $project: {
+                    clientId: 1,
+                    uniqueId: 1,
+                    username: 1,
+                    dateTime: 1,
+                    day: 1,
+                    bankName: 1,
+                    city: 1,
+                    clientName: 1,
+                    mobileNumber: 1,
+                    address: 1,
+                    payment: 1,
+                    collectedBy: 1,
+                    dsa: 1,
+                    engineerName: 1,
+                    notes: 1,
+                    selectedForm: 1,
+                    selectedFormName: 1,
+                    chipName: 1,
+                    status: 1,
+                    managerFeedback: 1,
+                    submittedByManager: 1,
+                    lastUpdatedBy: 1,
+                    lastUpdatedByRole: 1,
+                    lastUpdatedAt: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                    formType: 1
+                }
+            },
+            { $sort: sortParams },
+            { $skip: skip },
+            { $limit: limit }
         ];
 
-        // Fetch forms with pagination
-        const forms = await RajeshHouseModel.find(filter)
-            .select(selectFields.join(' '))
-            .skip(skip)
-            .limit(limit)
-            .sort(sortParams)
-            .lean();
+        // Fetch forms with pagination using aggregation pipeline
+        const forms = await RajeshHouseModel.aggregate(pipeline);
 
         // Count total matching documents
         const total = await RajeshHouseModel.countDocuments(filter);
@@ -617,7 +660,7 @@ export const deleteMultipleRajeshHouse = async (req, res) => {
 };
 export const getLastSubmittedRajeshHouse = async (req, res) => {
     try {
-        const { username, clientId } = req.query;
+        const { username, clientId, selectedFormName } = req.query;
 
         if (!username || !clientId) {
             return res.status(400).json({
@@ -626,19 +669,37 @@ export const getLastSubmittedRajeshHouse = async (req, res) => {
             });
         }
 
-        const lastForm = await RajeshHouseModel.findOne({
+        // Build filter: always filter by username and clientId
+        const filter = {
             username,
             clientId
-        })
+        };
+
+        // If selectedFormName is provided, filter by it to match the selected form type
+        if (selectedFormName) {
+            filter.selectedFormName = selectedFormName;
+            console.log("[getLastSubmittedRajeshHouse] Filtering by selectedFormName:", selectedFormName);
+        }
+
+        const lastForm = await RajeshHouseModel.findOne(filter)
             .sort({ createdAt: -1 })
             .lean();
 
         if (!lastForm) {
             return res.status(404).json({
                 success: false,
-                message: "No previous form found for autofill"
+                message: selectedFormName 
+                    ? `No previous form found for autofill with selectedFormName: ${selectedFormName}` 
+                    : "No previous form found for autofill"
             });
         }
+
+        console.log("[getLastSubmittedRajeshHouse] Found form:", {
+            uniqueId: lastForm.uniqueId,
+            selectedFormName: lastForm.selectedFormName,
+            hasPdfDetails: !!lastForm.pdfDetails,
+            hasSpreadsheetData: !!lastForm.spreadsheetData
+        });
 
         res.status(200).json({
             success: true,

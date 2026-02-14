@@ -29,6 +29,7 @@ const rajeshHouseSchema = new mongoose.Schema({
     customEngineerName: { type: String, default: "" },
     notes: { type: String, default: "" },
     selectedForm: { type: String, default: null },
+    selectedFormName: { type: String, default: null },
     elevation: { type: String, default: "" },
     coordinates: { type: coordinateSchema, default: () => ({}) },
     propertyImages: [mongoose.Schema.Types.Mixed],
