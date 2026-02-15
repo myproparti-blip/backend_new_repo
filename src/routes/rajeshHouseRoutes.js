@@ -38,7 +38,7 @@ router.get("/last-form/prefill", authMiddleware, getLastSubmittedRajeshHouse);
 router.get("/:id", authMiddleware, getRajeshHouseById);
 
 // Update Rajesh House form (only user can update their own pending form)
-router.put(
+router.patch(
     "/:id",
     authMiddleware,
     (req, res, next) => {
